@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "247606092400",
+    "project_id": "marvel-info-5a3e1",
+    "storage_bucket": "marvel-info-5a3e1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:247606092400:android:22cf895942c372e0210ab5",
+        "android_client_info": {
+          "package_name": "com.example.marvel_info"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKwuUijdKauUdUa5Gb9lACzJquv4MTKSg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
