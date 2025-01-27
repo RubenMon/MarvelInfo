@@ -7,19 +7,19 @@ class MarvelApiService {
   final String privateKey = "ee13a061765a7dbe08fcd3b48768d057320f79b9";
   final String baseUrl = "https://gateway.marvel.com/v1/public";
 
-  /// Genera el hash necesario para autenticar las solicitudes
   String _generateHash(String timestamp) {
     final input = timestamp + privateKey + publicKey;
     return md5.convert(utf8.encode(input)).toString();
   }
 
-  /// Obtiene la lista de personajes desde la API de Marvel
-  Future<List<Map<String, dynamic>>> fetchCharacters() async {
+  Future<List<Map<String, dynamic>>> fetchCharacters(
+      {int offset = 0, int limit = 30, String? nameStartsWith}) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     final hash = _generateHash(timestamp);
 
     final url = Uri.parse(
-      "$baseUrl/characters?ts=$timestamp&apikey=$publicKey&hash=$hash",
+      "$baseUrl/characters?ts=$timestamp&apikey=$publicKey&hash=$hash&offset=$offset&limit=$limit"
+      "${nameStartsWith != null ? '&nameStartsWith=$nameStartsWith' : ''}",
     );
 
     try {
@@ -29,13 +29,14 @@ class MarvelApiService {
         final data = json.decode(response.body);
         final results = data['data']['results'] as List;
 
-        // Mapeamos los resultados para obtener solo la información necesaria
         return results.map((character) {
           final thumbnail = character['thumbnail'];
           final imageUrl = "${thumbnail['path']}.${thumbnail['extension']}";
           return {
             'name': character['name'],
-            'imageUrl': imageUrl,
+            'imageUrl': imageUrl.contains("image_not_available")
+                ? "https://imgs.search.brave.com/B7-gbgoCYR2WLCefSZE4gZAztX8yJNp-Uxr624Br-RQ/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93YWxs/cGFwZXJzLmNvbS9p/bWFnZXMvaGQvcmVk/LW1hcnZlbC1pcGhv/bmUtdGl0bGUtbG9n/by1weXA1ZWl0NW80/OWpuenJyLmpwZw"
+                : imageUrl,
           };
         }).toList();
       } else {
@@ -44,23 +45,5 @@ class MarvelApiService {
     } catch (e) {
       throw Exception('Error en la conexión: $e');
     }
-  }
-}
-
-/// Prueba la función fetchCharacters y muestra los resultados en consola
-void main() async {
-  final marvelApi = MarvelApiService();
-
-  try {
-    // Llama a la función fetchCharacters
-    final characters = await marvelApi.fetchCharacters();
-
-    // Imprime los datos obtenidos
-    print("Personajes obtenidos:");
-    for (var character in characters) {
-      print("Nombre: ${character['name']}, Imagen: ${character['imageUrl']}");
-    }
-  } catch (e) {
-    print("Error: $e");
   }
 }
