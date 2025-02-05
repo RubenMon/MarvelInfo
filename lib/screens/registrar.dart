@@ -1,7 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 class Register extends StatefulWidget {
   const Register({super.key});
@@ -18,7 +16,6 @@ class _RegisterState extends State<Register> {
 
   final _formKey = GlobalKey<FormState>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   String? _validateUsername(String? value) {
     final usernameRegex = RegExp(r'^[A-ZÑ][a-zñ]+$');
@@ -63,31 +60,11 @@ class _RegisterState extends State<Register> {
     if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
-    final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
 
     try {
-      // Verificar si el correo ya está registrado en Firestore
-      final existingUser = await _db.collection('users').where('email', isEqualTo: email).get();
-      if (existingUser.docs.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('El correo ya está registrado')),
-        );
-        return;
-      }
-
       // Registrar usuario en Firebase Authentication
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // Guardar información adicional en Firestore
-      await _db.collection('users').doc(userCredential.user!.uid).set({
-        'username': username,
-        'email': email,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      await _auth.createUserWithEmailAndPassword(email: email, password: password);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registro exitoso')),
