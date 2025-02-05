@@ -1,9 +1,6 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:marvel_info/screens/personajes_marvel.dart';
-import 'package:marvel_info/screens/registrar.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -16,7 +13,7 @@ class _LoginState extends State<Login> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
@@ -34,46 +31,37 @@ class _LoginState extends State<Login> {
     return null;
   }
 
-  /// Método para cifrar la contraseña usando SHA-256
-  String _hashPassword(String password) {
-    final bytes = utf8.encode(password); // Convierte la contraseña a bytes UTF-8
-    final digest = sha256.convert(bytes); // Aplica SHA-256
-    return digest.toString(); // Devuelve el hash como cadena
-  }
-
   Future<void> _loginUser() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    final hashedPassword = _hashPassword(password); // Cifra la contraseña
+    if (!_formKey.currentState!.validate()) return;
 
     try {
-      // Buscar si el correo y la contraseña coinciden en la base de datos
-      final querySnapshot = await _db
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .where('password', isEqualTo: hashedPassword) // Contraseña cifrada
-          .get();
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      if (querySnapshot.docs.isNotEmpty) {
-        // Usuario y contraseña coinciden
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Inicio de sesión exitoso')),
-        );
-
-        // Cambiar a la pantalla de personajes
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => PersonajesMarvel()),
-        );
-      } else {
-        // Usuario o contraseña incorrectos
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Correo o contraseña incorrectos')),
-        );
-      }
-    } catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al iniciar sesión: $e')),
+        const SnackBar(content: Text('Inicio de sesión exitoso')),
+      );
+
+      // Redirigir a la pantalla de personajes
+      Navigator.pushReplacement(
+        // ignore: use_build_context_synchronously
+        context,
+        MaterialPageRoute(builder: (context) => PersonajesMarvel()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = 'Error al iniciar sesión';
+      if (e.code == 'user-not-found') {
+        errorMessage = 'No existe un usuario con ese correo';
+      } else if (e.code == 'wrong-password') {
+        errorMessage = 'Contraseña incorrecta';
+      }
+
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage)),
       );
     }
   }
@@ -87,14 +75,8 @@ class _LoginState extends State<Login> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo de Marvel
-              Image.asset(
-                'assets/logo_marvel.png',
-                height: 100,
-              ),
+              Image.asset('assets/logo_marvel.png', height: 100),
               const SizedBox(height: 20),
-
-              // Contenedor principal para el formulario
               Container(
                 padding: const EdgeInsets.all(20),
                 margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -108,11 +90,7 @@ class _LoginState extends State<Login> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Campo: Correo electrónico
-                      const Text(
-                        'Correo electrónico',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                      const Text('Correo electrónico', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 5),
                       TextFormField(
                         controller: _emailController,
@@ -126,12 +104,7 @@ class _LoginState extends State<Login> {
                         validator: _validateEmail,
                       ),
                       const SizedBox(height: 10),
-
-                      // Campo: Contraseña
-                      const Text(
-                        'Contraseña',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                      const Text('Contraseña', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 5),
                       TextFormField(
                         controller: _passwordController,
@@ -145,17 +118,11 @@ class _LoginState extends State<Login> {
                         validator: _validatePassword,
                       ),
                       const SizedBox(height: 20),
-
-                      // Botón de inicio de sesión
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              _loginUser();
-                            }
-                          },
+                          onPressed: _loginUser,
                           child: const Text('Inicia sesión'),
                         ),
                       ),
@@ -163,26 +130,14 @@ class _LoginState extends State<Login> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20),
-
-              // Opciones: Recuperar contraseña y registrarse
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text('¿No tienes usuario? '),
                   GestureDetector(
-                    onTap: () {
-                      // Cambiar a la pantalla de registro
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Register()),
-                      );
-                    },
-                    child: const Text(
-                      'Regístrate',
-                      style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                    ),
+                    onTap: () => Navigator.pushNamed(context, '/register'),
+                    child: const Text('Regístrate', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),

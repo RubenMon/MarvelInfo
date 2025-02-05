@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:marvel_info/screens/login.dart';
+import 'package:marvel_info/rutas/rutas.dart';
+import 'package:marvel_info/screens/screens.dart';
 
 void main() async {
   // Asegúrate de inicializar Firebase antes de ejecutar la app
@@ -16,11 +16,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Registro Marvel',
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-      ),
-      home: const Login(), // Usa el widget de registro
+      title: 'Marvel Info',
+      initialRoute: '/login',
+      routes: appRoutes,
     );
   }
 }

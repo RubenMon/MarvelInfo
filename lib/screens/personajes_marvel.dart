@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:marvel_info/api/marvel_api_service.dart';
+import 'package:marvel_info/screens/menuLateral.dart';
+import 'package:marvel_info/screens/personajes_comics.dart';
 
 class PersonajesMarvel extends StatefulWidget {
   const PersonajesMarvel({super.key});
@@ -18,8 +20,9 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
   bool _hasMore = true;
   int _offset = 0;
   final int _limit = 30;
-  String _searchQuery = ""; // Texto actual del buscador
-  bool _isSearching = false; // Estado para mostrar/ocultar el buscador
+  String _searchQuery = "";
+  bool _isSearching = false;
+  bool _isDisposed = false;
 
   @override
   void initState() {
@@ -27,8 +30,7 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
     _fetchCharacters();
 
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-              _scrollController.position.maxScrollExtent &&
+      if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent &&
           !_isLoading &&
           _hasMore) {
         _fetchCharacters();
@@ -42,12 +44,15 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _scrollController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _fetchCharacters() async {
+    if (_isDisposed) return;
+
     setState(() {
       _isLoading = true;
     });
@@ -59,12 +64,12 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
         nameStartsWith: _searchQuery.isNotEmpty ? _searchQuery : null,
       );
 
+      if (_isDisposed) return;
+
       setState(() {
         if (_offset == 0) {
-          // Si estamos en la primera página, reemplazamos los personajes
           _characters = newCharacters;
         } else {
-          // Si no, añadimos más personajes
           _characters.addAll(newCharacters);
         }
 
@@ -74,39 +79,35 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
           _hasMore = false;
         }
       });
-    } catch (e) {
-      // Manejar el error aquí si es necesario
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (!_isDisposed) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   void _onSearchChanged() {
     final query = _searchController.text.toLowerCase();
 
-    if (query.isEmpty) {
-      // Si el buscador está vacío, reiniciamos la lista y mostramos todos los personajes
-      setState(() {
-        _searchQuery = "";
-        _offset = 0; // Reiniciar la paginación
-        _hasMore = true; // Permitir más personajes
-        _characters.clear(); // Limpiar la lista
-      });
+    setState(() {
+      _searchQuery = query;
+      _offset = 0;
+      _hasMore = true;
+      _characters.clear();
+    });
 
-      _fetchCharacters(); // Realizar nueva llamada para obtener todos los personajes
-    } else {
-      // Si hay texto en el buscador, buscar personajes por nombre
-      setState(() {
-        _searchQuery = query;
-        _offset = 0; // Reiniciar la paginación
-        _hasMore = true; // Permitir más personajes
-        _characters.clear(); // Limpiar la lista
-      });
+    _fetchCharacters();
+  }
 
-      _fetchCharacters(); // Realizar llamada filtrada
-    }
+  void _navigateToComicsPage(int characterId, String characterName) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComicsPage(characterId: characterId, characterName: characterName),
+      ),
+    );
   }
 
   @override
@@ -119,11 +120,8 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
                 controller: _searchController,
                 decoration: const InputDecoration(
                   hintText: 'Buscar personaje',
-                  hintStyle: TextStyle(color: Color.fromARGB(179, 0, 0, 0)),
                   border: InputBorder.none,
                 ),
-                style: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-                cursorColor: Colors.white,
                 autofocus: true,
               ),
         actions: [
@@ -133,7 +131,7 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
               setState(() {
                 if (_isSearching) {
                   _isSearching = false;
-                  _searchController.clear(); // Limpiar el campo de búsqueda
+                  _searchController.clear();
                 } else {
                   _isSearching = true;
                 }
@@ -142,8 +140,9 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
           ),
         ],
       ),
+      drawer: const MenuLateral(),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0), // Margen a los lados
         child: GridView.builder(
           controller: _scrollController,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -155,35 +154,40 @@ class _PersonajesMarvelState extends State<PersonajesMarvel> {
           itemCount: _characters.length + (_hasMore ? 1 : 0),
           itemBuilder: (context, index) {
             if (index == _characters.length) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: CircularProgressIndicator());
             }
 
             final character = _characters[index];
-            return Column(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8.0),
-                    child: Image.network(
-                      character['imageUrl'],
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          Image.asset("assets/images/placeholder.png"),
+            return GestureDetector(
+              onTap: () => _navigateToComicsPage(character['id'], character['name']),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 150, // Tamaño fijo para todas las imágenes
+                        child: Image.network(
+                          character['imageUrl'],
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  character['name'],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.bold),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                  const SizedBox(height: 5), // Espacio para evitar overflow
+                  SizedBox(
+                    height: 35, // Espacio fijo para el texto
+                    child: Text(
+                      character['name'],
+                      textAlign: TextAlign.center,
+                      maxLines: 2, // Permite que el texto use hasta dos líneas
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         ),
