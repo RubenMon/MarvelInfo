@@ -1,3 +1,3 @@
 Para iniciar sesión he creado un usuario para probar la aplicación.
-Correo electrónico: usuario@gmail.com
-Contraseña: Usuario777
+Correo electrónico: fferban041@g.educaand.es
+Contraseña: Francis123
