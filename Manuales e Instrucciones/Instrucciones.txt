@@ -1,0 +1,3 @@
+Para iniciar sesión he creado un usuario para probar la aplicación.
+Correo electrónico: usuario@gmail.com
+Contraseña: Usuario777
