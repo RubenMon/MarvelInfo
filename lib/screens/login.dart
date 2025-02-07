@@ -10,11 +10,13 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  // Controladores para los campos de correo y contraseña
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final _formKey = GlobalKey<FormState>(); // Clave para el formulario
+  final FirebaseAuth _auth = FirebaseAuth.instance; // Instancia de autenticación de Firebase
 
+  // Función para validar el correo electrónico
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'El correo no puede estar vacío';
@@ -24,6 +26,7 @@ class _LoginState extends State<Login> {
     return null;
   }
 
+  // Función para validar la contraseña
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'La contraseña no puede estar vacía';
@@ -31,8 +34,9 @@ class _LoginState extends State<Login> {
     return null;
   }
 
+  // Función para iniciar sesión con Firebase
   Future<void> _loginUser() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return; // Validar el formulario
 
     try {
       await _auth.signInWithEmailAndPassword(
@@ -40,6 +44,7 @@ class _LoginState extends State<Login> {
         password: _passwordController.text.trim(),
       );
 
+      // Mostrar mensaje de éxito
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Inicio de sesión exitoso')),
@@ -52,6 +57,7 @@ class _LoginState extends State<Login> {
         MaterialPageRoute(builder: (context) => PersonajesMarvel()),
       );
     } on FirebaseAuthException catch (e) {
+      // Manejo de errores de Firebase
       String errorMessage = 'Error al iniciar sesión';
       if (e.code == 'user-not-found') {
         errorMessage = 'No existe un usuario con ese correo';
@@ -59,6 +65,7 @@ class _LoginState extends State<Login> {
         errorMessage = 'Contraseña incorrecta';
       }
 
+      // Mostrar mensaje de error
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
@@ -75,7 +82,7 @@ class _LoginState extends State<Login> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/logo_marvel.png', height: 100),
+              Image.asset('assets/logo_marvel.png', height: 100), // Logo de Marvel
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(20),
@@ -90,6 +97,7 @@ class _LoginState extends State<Login> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Campo de correo electrónico
                       const Text('Correo electrónico', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 5),
                       TextFormField(
@@ -104,6 +112,7 @@ class _LoginState extends State<Login> {
                         validator: _validateEmail,
                       ),
                       const SizedBox(height: 10),
+                      // Campo de contraseña
                       const Text('Contraseña', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 5),
                       TextFormField(
@@ -118,6 +127,7 @@ class _LoginState extends State<Login> {
                         validator: _validatePassword,
                       ),
                       const SizedBox(height: 20),
+                      // Botón de inicio de sesión
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -131,6 +141,7 @@ class _LoginState extends State<Login> {
                 ),
               ),
               const SizedBox(height: 20),
+              // Enlace para registrarse
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

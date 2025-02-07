@@ -1,3 +1,4 @@
+//Exportaciones de todas las pantallas
 export 'package:flutter/material.dart';
 export 'package:marvel_info/screens/login.dart';
 export 'package:marvel_info/screens/registrar.dart';

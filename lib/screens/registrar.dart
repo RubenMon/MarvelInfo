@@ -9,14 +9,18 @@ class Register extends StatefulWidget {
 }
 
 class _RegisterState extends State<Register> {
+  // Controladores para los campos de texto
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  // Clave global para el formulario
   final _formKey = GlobalKey<FormState>();
+  // Instancia de FirebaseAuth
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  // Validación del nombre de usuario
   String? _validateUsername(String? value) {
     final usernameRegex = RegExp(r'^[A-ZÑ][a-zñ]+$');
     if (value == null || value.isEmpty) {
@@ -27,6 +31,7 @@ class _RegisterState extends State<Register> {
     return null;
   }
 
+  // Validación del correo electrónico
   String? _validateEmail(String? value) {
     final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
     if (value == null || value.isEmpty) {
@@ -37,6 +42,7 @@ class _RegisterState extends State<Register> {
     return null;
   }
 
+  // Validación de la contraseña
   String? _validatePassword(String? value) {
     final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,}$');
     if (value == null || value.isEmpty) {
@@ -47,6 +53,7 @@ class _RegisterState extends State<Register> {
     return null;
   }
 
+  // Validación de la confirmación de la contraseña
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Repite la contraseña';
@@ -56,7 +63,9 @@ class _RegisterState extends State<Register> {
     return null;
   }
 
+  // Función para registrar al usuario
   Future<void> _registerUser() async {
+    // Verificar si el formulario es válido
     if (!_formKey.currentState!.validate()) return;
 
     final email = _emailController.text.trim();
@@ -66,6 +75,8 @@ class _RegisterState extends State<Register> {
       // Registrar usuario en Firebase Authentication
       await _auth.createUserWithEmailAndPassword(email: email, password: password);
 
+      // Mostrar mensaje de éxito
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Registro exitoso')),
       );
@@ -77,9 +88,11 @@ class _RegisterState extends State<Register> {
       _confirmPasswordController.clear();
 
       // Redirigir al usuario a la pantalla de inicio de sesión
+      // ignore: use_build_context_synchronously
       Navigator.pushReplacementNamed(context, '/login');
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Error al registrar usuario';
+      // Manejar posibles errores de Firebase
       if (e.code == 'email-already-in-use') {
         errorMessage = 'El correo ya está en uso';
       } else if (e.code == 'weak-password') {
@@ -88,6 +101,8 @@ class _RegisterState extends State<Register> {
         errorMessage = 'El correo electrónico no es válido';
       }
 
+      // Mostrar mensaje de error
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMessage)),
       );
@@ -103,8 +118,10 @@ class _RegisterState extends State<Register> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Imagen de logo
               Image.asset('assets/logo_marvel.png', height: 100),
               const SizedBox(height: 20),
+              // Contenedor del formulario
               Container(
                 padding: const EdgeInsets.all(20),
                 margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -118,11 +135,16 @@ class _RegisterState extends State<Register> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Campo de nombre de usuario
                       _buildTextField('Nombre de usuario', _usernameController, TextInputType.name, _validateUsername),
+                      // Campo de correo electrónico
                       _buildTextField('Correo electrónico', _emailController, TextInputType.emailAddress, _validateEmail),
+                      // Campo de contraseña
                       _buildTextField('Contraseña', _passwordController, TextInputType.visiblePassword, _validatePassword, obscureText: true),
+                      // Campo de confirmación de la contraseña
                       _buildTextField('Repite la contraseña', _confirmPasswordController, TextInputType.visiblePassword, _validateConfirmPassword, obscureText: true),
                       const SizedBox(height: 20),
+                      // Botón de registro
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -136,6 +158,7 @@ class _RegisterState extends State<Register> {
                 ),
               ),
               const SizedBox(height: 20),
+              // Enlace para iniciar sesión si ya tienes cuenta
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -159,6 +182,7 @@ class _RegisterState extends State<Register> {
     );
   }
 
+  // Función para construir un campo de texto con su validación
   Widget _buildTextField(String label, TextEditingController controller, TextInputType keyboardType, String? Function(String?)? validator, {bool obscureText = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
